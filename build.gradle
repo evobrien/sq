@@ -1,0 +1,39 @@
+group 'com.squarespace.interview'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+sourceCompatibility = 1.8
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.51"
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'javax.json:javax.json-api:1.0'
+    compile 'org.glassfish:javax.json:1.0.4'
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.2.51"
+    testCompile "junit:junit:4.12"
+}
+
+test {
+    testLogging {
+        // always run the tests
+        outputs.upToDateWhen {false}
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        showExceptions true
+        exceptionFormat "full"
+        showCauses true
+        showStackTraces true
+    }
+}
