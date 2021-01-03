@@ -34,6 +34,13 @@ object FindPointSolutionKt {
         return result
     }
 
+    /**
+    * @param toFind point to search for in current rect & child nodes (if any)
+     * @param searchNode current searchNode to search
+     * @param offsetX cumulative relative offset relative to parent
+     * @param offsetY cumulative relative offset relative to parent
+     * @param isChildNode whether the current node is a child (false by default)
+     * */
     fun searchTree(toFind: Point, searchNode: Node,offsetX:Int,offsetY:Int, isChildNode: Boolean = false):Boolean{
 
         if(searchNode.children.size>0) {
