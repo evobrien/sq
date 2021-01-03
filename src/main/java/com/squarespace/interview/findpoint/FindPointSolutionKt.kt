@@ -26,7 +26,7 @@ object FindPointSolutionKt {
             if(!inPath(rootNode, toFind)){
                 return result
             }else{
-                searchTree(toFind, rootNode)
+                searchTree(toFind, rootNode,0,0)
                 result.reverse()
             }
         }
@@ -34,14 +34,15 @@ object FindPointSolutionKt {
         return result
     }
 
-    fun searchTree(toFind: Point, searchNode: Node, isChildNode: Boolean = false):Boolean{
+    fun searchTree(toFind: Point, searchNode: Node,offsetX:Int,offsetY:Int, isChildNode: Boolean = false):Boolean{
 
         if(searchNode.children.size>0) {
             var found:String?=null
             for(node in searchNode.children){
-                if(isInParentBounds(node,searchNode)
-                        && searchTree(toFind, node, true)) {
-                    found=node.id
+                val offX = offsetX + searchNode.left
+                val offY = offsetY + searchNode.top
+                if(searchTree(toFind, node, offX,offY,true)) {
+                    found = node.id
                 }
             }
             if(found!=null){
@@ -50,7 +51,7 @@ object FindPointSolutionKt {
                 return false
             }
         }
-        if(inRect(searchNode, toFind)){
+        if(inRect(searchNode, toFind,offsetX,offsetY)){
             if(!isChildNode){
                 result.add(searchNode.id)
             }
@@ -64,9 +65,9 @@ object FindPointSolutionKt {
         return (toFind.x >=node.left) && (toFind.y >=node.top)
     }
 
-    fun inRect(node: Node, toFind: Point):Boolean{
-        val x1= node.left
-        val y1=node.top
+    fun inRect(node: Node, toFind: Point,offsetX:Int,offsetY:Int):Boolean{
+        val x1= node.left + offsetX
+        val y1=node.top + offsetY
 
         //diagonally opposite corner
         val x2=x1 + node.width
