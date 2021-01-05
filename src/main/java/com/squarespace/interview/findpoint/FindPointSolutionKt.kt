@@ -41,14 +41,15 @@ object FindPointSolutionKt {
         if(searchNode.children.size>0) {
             var found:Node?=null
             val top=searchNode.children.size-1
+            //counting down will yield the highest index first
+            //and breaking after the first found node means we don't need to do an exhaustive search
+            //meaning we can eliminate a large number of nodes from the search
             for(inode in top downTo 0){
                 //offsets are accumulated at every level in the hierarchy
                 val offX = offsetX + searchNode.left
                 val offY = offsetY + searchNode.top
                 val node=searchNode.children[inode]
                 if(searchTreeForMatchingPath(toFind, node, offX,offY)){
-                    //matches/true values at a higher child index
-                    // overwrite those at a lower index with every loop iteration
                     found=node
                     break
                 }
