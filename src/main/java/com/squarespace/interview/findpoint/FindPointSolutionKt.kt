@@ -1,9 +1,16 @@
 package com.squarespace.interview.findpoint
 
 import java.awt.Point
+import java.util.NoSuchElementException
 import kotlin.math.abs
 
 object FindPointSolutionKt {
+
+    class NodeEx constructor(val node:Node,val level: Int,val parent:String)
+
+    private var result= mutableListOf<String>()
+    private lateinit var root:Node
+    var temp= mutableListOf<NodeEx>()
 
     /**
      * Given a root [Node] of a view hierarchy, provide an ordered list of
@@ -14,21 +21,16 @@ object FindPointSolutionKt {
      * @param toFind An x,y coordinate to be located.
      * @return An ordered list of [Node.id]
      */
-    private var result= mutableListOf<String>()
-
     @JvmStatic
     fun findPathToNode(rootNode: Node, toFind: Point): List<String> {
-        result= mutableListOf<String>()
+        result= mutableListOf()
+        temp= mutableListOf()
+        root=rootNode
         //negative results are illegal so result empty list
-        if(toFind.x < 0 || toFind.y < 0){
+        if((toFind.x < 0 || toFind.y < 0) or !inPath(rootNode, toFind)) {
             return result
         }else{
-            if(!inPath(rootNode, toFind)){
-                return result
-            }else{
-                searchTree(toFind, rootNode,0,0)
-                result.reverse()
-            }
+            searchTree(toFind, rootNode,0,0,0)
         }
 
         return result
@@ -41,31 +43,56 @@ object FindPointSolutionKt {
      * @param offsetY cumulative relative offset relative to parent
      * @param isChildNode whether the current node is a child (false by default)
      * */
-    fun searchTree(toFind: Point, searchNode: Node,offsetX:Int,offsetY:Int, isChildNode: Boolean = false):Boolean{
-
+    fun searchTree(toFind: Point, searchNode: Node,offsetX:Int,offsetY:Int, level:Int):Boolean{
+        //loop over children and recurse
         if(searchNode.children.size>0) {
-            var found:String?=null
+            var lev=level
+            lev++
+            var found:Node?=null
             for(node in searchNode.children){
                 val offX = offsetX + searchNode.left
                 val offY = offsetY + searchNode.top
-                if(searchTree(toFind, node, offX,offY,true)) {
-                    found = node.id
+                if(searchTree(toFind, node, offX,offY,lev)){
+                    //true values at a higher child index overwrite those at a lower index
+                    found=node
                 }
             }
             if(found!=null){
-                result.add(found)
-                result.add(searchNode.id)
-                return false
+                val nodeEx=NodeEx(found,level,searchNode.id)
+                temp.add(nodeEx)
             }
         }
         if(inRect(searchNode, toFind,offsetX,offsetY)){
-            if(!isChildNode){
-                result.add(searchNode.id)
-            }
+            postProcessing(searchNode)
             return true
         }
-
         return false
+    }
+
+    private fun postProcessing(searchNode: Node) {
+        if (searchNode.id == root.id) {
+            result.clear()
+            temp.add(NodeEx(searchNode, 0, ""))
+            temp.reverse()
+            var parentId = ""
+            for ((index, nodEx) in temp.withIndex()) {
+                if (index == 0) {
+                    result.add(nodEx.node.id)
+                }
+                if (index > 0) {
+                    //if this node does not have the previous node as
+                    // a parent id then it's a branch with a lower index
+                    // so this node and everything after can be ignored
+                    // thus we break and exit the loop
+                    if (nodEx.parent != parentId) {
+                        break
+                    } else {
+                        result.add(nodEx.node.id)
+                    }
+                }
+                parentId = nodEx.node.id
+            }
+        }
     }
 
     fun inPath(node: Node, toFind: Point):Boolean{
@@ -81,8 +108,10 @@ object FindPointSolutionKt {
         val y2=y1 + node.height
 
         //is the point located in the bounds of the rect
-       return (toFind.x >= x1 && toFind.x < x2 &&
+       if (toFind.x >= x1 && toFind.x < x2 &&
                 toFind.y >= y1 && toFind.y < y2)
+                    return true
+        return false
     }
 
     fun inRect1(node: Node, toFind: Point):Boolean{
