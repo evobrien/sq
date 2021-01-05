@@ -4,13 +4,8 @@ import java.awt.Point
 
 object FindPointSolutionKt {
 
-    //wrapper class to include parent id which we use in post-processing
-    class NodeEx constructor(val node:Node,val parent:String)
-
     private lateinit var result:MutableList<String>
     private lateinit var root:Node
-    private lateinit var candidateNodes:MutableList<NodeEx>
-
     /**
      * Given a root [Node] of a view hierarchy, provide an ordered list of
      * [Node IDs][Node.id] representing the path through the hierarchy where
@@ -23,7 +18,6 @@ object FindPointSolutionKt {
     @JvmStatic
     fun findPathToNode(rootNode: Node, toFind: Point): List<String> {
         result= mutableListOf()
-        candidateNodes= mutableListOf()
         root=rootNode
         //negative results are illegal and points outside origin should not be considered
         // so result empty list in those cases
@@ -46,58 +40,32 @@ object FindPointSolutionKt {
         //loop over children and recurse
         if(searchNode.children.size>0) {
             var found:Node?=null
-            for(node in searchNode.children){
+            val top=searchNode.children.size-1
+            //counting down will yield the highest index first
+            //and breaking after the first found node means we don't need to do an exhaustive search
+            //meaning we can eliminate a large number of nodes from the search
+            for(inode in top downTo 0){
                 //offsets are accumulated at every level in the hierarchy
                 val offX = offsetX + searchNode.left
                 val offY = offsetY + searchNode.top
+                val node=searchNode.children[inode]
                 if(searchTreeForMatchingPath(toFind, node, offX,offY)){
-                    //matches/true values at a higher child index
-                    // overwrite those at a lower index with every loop iteration
                     found=node
+                    break
                 }
             }
             if(found!=null){
-                val nodeEx=NodeEx(found,searchNode.id)
-                candidateNodes.add(nodeEx)
+                result.add(found.id)
             }
         }
         if(inRect(searchNode, toFind,offsetX,offsetY)){
             if (searchNode.id == root.id) {
-                postProcessing(searchNode)
+                result.add(searchNode.id)
+                result.reverse()
             }
             return true
         }
         return false
-    }
-
-    /**
-     * Function processes the candidate node list producing only top level one path
-     * and discarding any other paths (the unprocessed candidate nodes list can include extraneous nodes)
-     */
-    private fun postProcessing(searchNode: Node) {
-        if (searchNode.id == root.id) {
-            result.clear()
-            candidateNodes.add(NodeEx(searchNode,  ""))
-            candidateNodes.reverse()
-            var parentId = ""
-            for ((index, nodEx) in candidateNodes.withIndex()) {
-                if (index == 0) {
-                    result.add(nodEx.node.id)
-                }
-                if (index > 0) {
-                    //if this node does not have the previous node as
-                    // a parent id then it's a branch with a lower index
-                    // so this node and everything after can be ignored
-                    // thus we break and exit the loop
-                    if (nodEx.parent != parentId) {
-                        break
-                    } else {
-                        result.add(nodEx.node.id)
-                    }
-                }
-                parentId = nodEx.node.id
-            }
-        }
     }
 
     /**
